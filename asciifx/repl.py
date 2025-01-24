@@ -36,7 +36,10 @@ class Repl(ABC):
             with redirect_stdout(buffer):
                 self.eval(line)
 
-        return Interaction(f"{prompt} ", line, buffer.getvalue())
+        return Interaction(f"{prompt} ", self.format_python_code(line), buffer.getvalue())
+
+    def format_python_code(self, output:str) -> str:
+        return highlight(output) 
 
     @abstractmethod
     def prompt(self) -> str:
@@ -51,6 +54,34 @@ class Repl(ABC):
         ...
 
 
+pygments = None
+try:
+    import pygments
+    from pygments.lexers import PythonLexer
+    from pygments.formatters import TerminalTrueColorFormatter
+    #from pygments.formatters import Terminal256Formatter
+    #from pygments.formatters import TerminalFormatter
+except ImportError:
+    pass
+
+
+_lexer = PythonLexer()
+#tokens = list(lexer.get_tokens(code)) 
+style='monokai'  # pygmentize -L styles
+#style='github-dark'
+#style='solarized-dark'
+_formatter = TerminalTrueColorFormatter(style=style)
+
+def highlight(code: str) -> str:
+    return pygments.highlight(code, _lexer, _formatter)
+
+
+BOLDSTART = '\033[1m'
+BOLDEND = '\033[0m'
+PROMPTSTART = '\033[38;5;238m\033[1m'
+PROMPTEND = BOLDEND + '\033[22m'
+
+
 class PyRepl(Repl):
     """A Python REPL."""
 
@@ -61,7 +92,7 @@ class PyRepl(Repl):
         self._more = False
 
     def prompt(self) -> str:
-        return "..." if self._more else ">>>"
+        return f"{PROMPTSTART}...{PROMPTEND}" if self._more else f"{PROMPTSTART}>>>{PROMPTEND}"
 
     def will_terminate(self, line: str) -> bool:
         return self.QUIT_INVOCATION.match(line) is not None
