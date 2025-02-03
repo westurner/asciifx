@@ -33,6 +33,11 @@ def create_parser() -> ArgumentParser:
         help="Select the Python script to convert.",
     )
     parser.add_argument(
+        "--repl",
+        default='asciifx.repl.PyRepl',
+        help="Repl class name ('asciifx.repl.PyRepl' (default), 'asciifx.repl.JupytextRepl',)"
+    )
+    parser.add_argument(
         "--speed",
         type=float,
         default=1.0,
@@ -81,6 +86,11 @@ def main(argv=None) -> int:
     try:
         input_path = Path(options.input).resolve()
 
+        import importlib
+        repl_modulename, repl_clsname = options.repl.rsplit('.', 1)
+        module = importlib.import_module(repl_modulename)
+        repl_cls = getattr(module, repl_clsname)
+
         with open(input_path, mode="r", encoding="utf8") as file:
             events, effective_width, effective_height = perform(
                 file,
@@ -89,6 +99,7 @@ def main(argv=None) -> int:
                 width=options.width,
                 height=options.height,
                 title=options.title,
+                ReplClass=repl_cls
             )
 
         if options.output:

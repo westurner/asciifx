@@ -108,6 +108,12 @@ class Controller:
         r"^\#\[(?P<command>[^ \t=]+)(?:[ \t]*[=][ \t]*(?P<param>[^\]]+))?\]\n$"
     )
 
+
+    # TODO: jupytext DoublePercentCellReader
+    PERCENT_FORMAT = re.compile(
+        r"^\# %%\s+\[?(?P<command>)\]$"
+    )
+
     def __init__(self) -> None:
         # The number of lines in the input script seen so far.
         self._lineno: int = 0
@@ -119,7 +125,9 @@ class Controller:
     def do_handle_pragma(self, line: str) -> bool:
         self._lineno += 1
 
-        if (match := self.SYNTAX.match(line)) is None:
+        #breakpoint()
+        _line = no_ansi_escape(line)
+        if (match := self.SYNTAX.match(_line)) is None:
             return False
 
         command, argument = match.groups()
@@ -168,8 +176,9 @@ class Controller:
 
     def off(self) -> None:
         self._animator.is_silent = True
-
+# 
     def think_time(self, data: str) -> None:
+        #breakpoint()
         self._animator.next_thought_delay = self._parse_float("think-time", data)
 
     def speed(self, data: str) -> None:
@@ -262,6 +271,7 @@ class Animator:
     def render(self, interaction: Interaction) -> Iterator[Event]:
         """Render a single interaction."""
         prompt, input, output = interaction
+        #breakpoint()
         if self._controller.do_handle_pragma(input) or self.is_silent:
             # Directives and silent interactions should not influence timings.
             # Hence they are skipped as previous interactions.

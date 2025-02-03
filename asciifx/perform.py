@@ -2,7 +2,7 @@ from collections.abc import Iterable, Sequence
 
 from .animator import Animator, Controller
 from .event import Header, to_json_lines, with_absolute_time
-from .repl import PyRepl, Repl
+from .repl import JupytextRepl, PyRepl, Repl
 
 
 def perform(
@@ -13,9 +13,11 @@ def perform(
     width: int = 80,  # If non-positive, replaced by observed width of asciicast.
     height: int = 35,  # If non-positive, replaced by observed height of asciicast.
     title: str = "Created by ascii-fx",
+    cwd: str = None,
+    _file: str = None,
     AnimatorClass: type[Animator] = Animator,
     ControllerClass: type[Controller] = Controller,
-    ReplClass: type[Repl] = PyRepl,
+    ReplClass: type[Repl] = PyRepl,  # JupytextRepl,
 ) -> tuple[Sequence[str], int, int]:
     """
     Turn a script into an asciicast performance. This function feeds the given
@@ -27,7 +29,7 @@ def perform(
     number of lines taken up by the asciicast.
     """
     # Play back script in interpreter REPL.
-    repl = ReplClass()
+    repl = ReplClass(cwd=cwd, _file=_file)
     interactions = repl.simulate_all(lines)
 
     # Convert to events with timing information.
